@@ -8,7 +8,7 @@ from datetime import datetime
 from base64 import b64encode
 
 from .utils import get_pokemon_name
-
+from .postgres import logPokemonDb
 db = SqliteDatabase('pogom.db', pragmas=(
     ('journal_mode', 'WAL'),
     ('cache_size', 10000),
@@ -112,7 +112,7 @@ def parse_map(map_dict):
         for p in cell.get('wild_pokemons', []):
             if p['encounter_id'] in pokemons:
                 continue  # prevent unnecessary parsing
-
+            logPokemonDb(p)
             pokemons[p['encounter_id']] = {
                 'encounter_id': b64encode(str(p['encounter_id'])),
                 'spawnpoint_id': p['spawnpoint_id'],

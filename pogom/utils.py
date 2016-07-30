@@ -31,6 +31,7 @@ def get_args():
 
     parser.add_argument('-d', '--debug', type=str.lower, help='Debug Level [info|debug]', default=None)
     parser.add_argument('-c', '--pycurl', help='Use pycurl downloader (unstable)', action='store_true')
+    parser.add_argument('--pokel-pass', help='Password for Pokelizer database')
 
     args = parser.parse_args()
     if args.password is None:
