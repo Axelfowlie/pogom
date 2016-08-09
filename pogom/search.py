@@ -140,7 +140,7 @@ def search(args, req_sleep=1):
             break
 
         i += 1
-        time.sleep(0.25)
+        time.sleep(0.22)
 
 
 def search_async(args):
@@ -243,4 +243,7 @@ def search_loop(args):
         scan_start_time = time.time()
         search(args)
         log.info("Finished scan")
+        log.info('Waiting 10 seconds before beginning new scan.')
+        time.sleep(10)
+
         SearchConfig.COMPLETE_SCAN_TIME = time.time() - scan_start_time
