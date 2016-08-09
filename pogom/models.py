@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import random
+import math
 from peewee import Model, SqliteDatabase, InsertQuery, IntegerField, \
-    CharField, FloatField, BooleanField, DateTimeField, fn, SQL
+    CharField, FloatField, BooleanField, DateTimeField, fn, SQL, CompositeKey
 from datetime import datetime
 from base64 import b64encode
+import threading
 
 from .utils import get_pokemon_name
 from .postgres import logPokemonDb
@@ -15,19 +18,7 @@ db = SqliteDatabase('pogom.db', pragmas=(
     ('mmap_size', 1024 * 1024 * 32),
 ))
 log = logging.getLogger(__name__)
-
-
-class SearchConfig(object):
-    ORIGINAL_LATITUDE = None
-    ORIGINAL_LONGITUDE = None
-    COVER = None
-    RADIUS = None
-
-    CHANGE = False  # Triggered when the setup is changed due to user input
-
-    LOGGED_IN = 0.0
-    LAST_SUCCESSFUL_REQUEST = 0.0
-    COMPLETE_SCAN_TIME = 0
+lock = threading.Lock()
 
 
 class BaseModel(Model):
@@ -42,12 +33,15 @@ class BaseModel(Model):
 class Pokemon(BaseModel):
     # We are base64 encoding the ids delivered by the api
     # because they are too big for sqlite to handle
-    encounter_id = CharField(primary_key=True)
+    encounter_id = CharField()
     spawnpoint_id = CharField()
     pokemon_id = IntegerField()
     latitude = FloatField()
     longitude = FloatField()
     disappear_time = DateTimeField()
+    
+    class Meta:
+        primary_key = CompositeKey('encounter_id', 'disappear_time')
 
     @classmethod
     def get_active(cls):
@@ -71,9 +65,15 @@ class Pokemon(BaseModel):
                  .order_by(-SQL('count'))
                  .dicts())
 
-        for p in query:
+        pokemons = list(query)
+
+        known_pokemon = set( p['pokemon_id'] for p in query )
+        unknown_pokemon = set(range(1,151)).difference(known_pokemon)
+        pokemons.extend( { 'pokemon_id': i, 'count': 0 } for i in unknown_pokemon)
+
+        for p in pokemons:
             p['pokemon_name'] = get_pokemon_name(p['pokemon_id'])
-        return query
+        return pokemons
 
 
 class Pokestop(BaseModel):
@@ -115,7 +115,7 @@ def parse_map(map_dict):
             logPokemonDb(p)
             pokemons[p['encounter_id']] = {
                 'encounter_id': b64encode(str(p['encounter_id'])),
-                'spawnpoint_id': p['spawnpoint_id'],
+                'spawnpoint_id': p['spawn_point_id'],
                 'pokemon_id': p['pokemon_data']['pokemon_id'],
                 'latitude': p['latitude'],
                 'longitude': p['longitude'],
@@ -132,7 +132,7 @@ def parse_map(map_dict):
 
             pokemons[p['encounter_id']] = {
                 'encounter_id': b64encode(str(p['encounter_id'])),
-                'spawnpoint_id': p['spawnpoint_id'],
+                'spawnpoint_id': p['spawn_point_id'],
                 'pokemon_id': p['pokemon_data']['pokemon_id'],
                 'latitude': p['latitude'],
                 'longitude': p['longitude'],
@@ -176,8 +176,8 @@ def parse_map(map_dict):
                     'last_modified': datetime.utcfromtimestamp(
                             f['last_modified_timestamp_ms'] / 1000.0),
                 }
-
-    with db.atomic():
+                
+    with db.atomic() and lock:
         if pokemons:
             log.info("Upserting {} pokemon".format(len(pokemons)))
             bulk_upsert(Pokemon, pokemons)

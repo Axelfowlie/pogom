@@ -1,42 +1,43 @@
 # PoGoMap
-The no-bloat version of [PokemonGo-Map](https://github.com/AHAAAAAAA/PokemonGo-Map) (their rewrite is actually an early-stage fork of this project).
+The fastest Pokémon Go map available.
 
-Heavily using [pgoapi](https://github.com/tejado/pgoapi). 
+Heavily using [pgoapi](https://github.com/keyphact/pgoapi). Shout-out to the Unknown6 team!
 
-**Due to throttling of the niantic servers the `-c` option does not work at the moment. We have released a hotfix so that you can use the map without the -c option. However, it will not be as fast as before. We are currently evaluating options to achieve higher scan speeds again. See the comments of issue #58.**
+![image](https://cloud.githubusercontent.com/assets/1723176/17482369/bf3df2b2-5d81-11e6-904e-edfd496702dc.png)
 
+##Installation:
 
-![image](https://cloud.githubusercontent.com/assets/1723176/17143769/c5db3a80-5354-11e6-85d9-ba664e293cfc.png)
+**Note:** If you are upgrading from the last version, you will have to update and/or reinstall the requirements.
 
-##Installation and usage:
+1. Clone the repository `git clone https://github.com/favll/pogom.git`
+2. Install the dependencies `pip install -r requirements.txt`
+3. Start the server by running `python runserver.py`
 
-On Linux, for Debian-based distributions, you should install pycurl's dependencies before installing the project's requirements:
+**Pro-Tip:** Use the `-H` and `-P` flag to specify host and port. E.g. `-H "127.0.0.1" -P 5001` will tell the webserver to listen to localhost requests on port 5001. You can then head over and take a look at the map at `http://127.0.0.1:5001/`. If you want the server to listen on all public IPs use the host `0.0.0.0`. This will allow you to access your server from other machines.
 
-`sudo apt-get install libssl-dev libcurl4-openssl-dev python-dev`
+There's no other flags besides  `-H` and `-P`, everything else is configured through the Web UI.
 
-Edit `pogom/__init__.py` and enter your GMaps Key.
+##Usage
 
-```
-pip install -r requirements.txt
-python runserver.py -u USERNAME -p PASSWORD -l LOCATION -r SEARCHRADIUS -c
-```
-The `-c` flag switches to pycurl (python wrapper around the libcurl library) as downloader. This is so performant that the parsing and DB stuff becomes the bottleneck. 
-
+ - Visit `http://<ip>:<port>/` (by default: `http://127.0.0.1:5000/`)
+ - On the first run you will be redirected to a configuration page
+   - Enter your Google Maps Api Key
+   - Enter all accounts and passwords to be used for scanning
+   - Optionally protect the configuration with a password (only authenticated users can access the config and change scan locations)
+ - Go back to `http://<ip>:<port>/` to view the map
+ - Add scan locations simply by clicking on the map
 
 ##Features
-- [x] Extremely fast (scans a 5km search radius in 1m30s with the -c flag)
-- [x] Perfect coverage (using a perfect hexagonal grid of radius 100m)
-- [x] No Bloat (we tried to keep this as lightweight as possible, therefore you won't see as many flags in the help file)
+- [x] Extremely fast (using multiple accounts)
+- [x] Multiple locations
+- [x] Perfect coverage (using a perfect hexagonal grid of radius 70m)
+- [x] Everything configurable from the browser (bye bye command-line flags)
 - [x] Hide common Pokemon
 - [x] Server status in the Web-GUI
 - [x] Stats about seen Pokemon
-- [x] Proper handling of server downtime (using exponential backoff strategy)
 - [x] Mobile friendly
-- [ ] Show/Hide Pokestops
-- [ ] Notifications
 
 ##TODO
- - Move processing of responses (protobuf parsing & save to DB) to seperate process
- - Use different (faster) library for protobuf parsing
- - Web-GUI for all configuration settings
- - Heatmaps!
+- **Notifications**
+- Show/Hide Pokestops
+- Heatmaps!

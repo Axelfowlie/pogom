@@ -4,7 +4,7 @@
             <meta charset="utf-8">
             <meta http-equiv="X-UA-Compatible" content="IE=edge">
             <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>PoGoMap</title>
+            <title>Pokémon Go Map</title>
             
             <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
             <link rel="icon" type="image/png" href="static/favicon.ico">
@@ -127,6 +127,7 @@ html, body {
   top: 0;
   left: 0;
   height: 100%;
+  overflow: scroll;
   
   background: #ededed;
   list-style-type: none;
@@ -202,9 +203,16 @@ span.select2 { width: 100% !important; }
                 <div id="menu-container">
                     <h1>Settings</h1>
                     <p>
-                        <span class='login-status label label-warning'>Not authenticated</span>
-                        <span class='last-request label label-warning'>No scans yet</span> <br />
+                        {% if is_authenticated %}
+                            <span class='auth-status label label-success'>Authenticated</span>
+                        {% else %}
+                            <span class='auth-status label label-warning'><a href="login" style="color: white; text-decoration: inherit;">Not authenticated</a></span>
+                        {% endif %}
+                        <br />
+                        <span class='last-request label label-warning'>No scans yet</span>
                         <span class='full-scan label label-grey'>No full scan yet</span>
+                        <span class='num-threads label label-grey'>0 Threads</span>
+                        <span class='num-accounts label label-grey'>0 Accounts</span>
                     </p>
 
                     <fieldset style="border: 0; padding-left: 0;">
@@ -212,20 +220,20 @@ span.select2 { width: 100% !important; }
                             <input type="checkbox" id="pokemon-checkbox">
                             <label for="pokemon-checkbox">Display Pokemon</label><br> 
                         </div>
-                        
+                        <!--
                         <div class="chckbox">
                             <input type="checkbox" id="pokestops-checkbox">
-                            <label for="pokestops-checkbox">Display all Pokestops</label><br> 
+                            <label for="pokestops-checkbox">Display all Pokestops</label><br>
                         </div>
                         
                         <div class="chckbox">
                             <input type="checkbox" id="pokestops-lured-checkbox">
-                            <label for="pokestops-lured-checkbox">Display lured Pokestops</label><br> 
+                            <label for="pokestops-lured-checkbox">Display lured Pokestops</label><br>
                         </div>
-                        
+                        -->
                         <div class="chckbox">
                             <input type="checkbox" id="gyms-checkbox">
-                            <label for="gyms-checkbox">Display Gyms</label><br> 
+                            <label for="gyms-checkbox">Display Gyms</label><br>
                         </div>
                         
                         <div class="chckbox">
@@ -242,6 +250,7 @@ span.select2 { width: 100% !important; }
                     </p>
 
                     <p>
+                        <a href="config">Server Configuration</a> <br />
                         <a href="stats">View Stats</a>
                     </p>
 
@@ -254,8 +263,7 @@ span.select2 { width: 100% !important; }
     </body>
     
     <script type="text/javascript">
-        var center_lat = {{lat}};
-        var center_lng = {{lng}};
+      var initialScanLocations = {{ scan_locations|safe }}
     </script>
 
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>

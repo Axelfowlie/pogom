@@ -6,4 +6,6 @@ config = {
     'LOCALES_DIR': 'static/locales',
     'ROOT_PATH': None,
     'GOOGLEMAPS_KEY': 'AIzaSyDNjiUNQClQ0nsA7c28zKhoY727AwUA1-E'
+    'CONFIG_PATH': None,
+    'SIGNATURE_LIB_PATH': None
 }
