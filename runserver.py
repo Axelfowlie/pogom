@@ -8,7 +8,7 @@ import random
 import string
 import os
 from threading import Thread
-import time
+
 from pogom import config
 from pogom.app import Pogom
 from pogom.models import create_tables
@@ -73,4 +73,4 @@ if __name__ == '__main__':
 
     app = Pogom(scan_config, __name__)
     config['ROOT_PATH'] = app.root_path
-    app.run(threaded=True, debug=args.debug, host=args.host, port=args.port)
+app.run(threaded=True, debug=args.debug, host=args.host, port=args.port)

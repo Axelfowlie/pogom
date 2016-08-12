@@ -26,14 +26,8 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-H', '--host', help='Set web server listening host', default='127.0.0.1')
     parser.add_argument('-P', '--port', type=int, help='Set web server listening port', default=5000)
-
     parser.add_argument('-d', '--debug', type=str.lower, help='Debug Level [info|debug]', default=None)
-<<<<<<< HEAD
-    parser.add_argument('-c', '--pycurl', help='Use pycurl downloader (unstable)', action='store_true')
     parser.add_argument('--pokel-pass', help='Password for Pokelizer database')
-    parser.add_argument('-sd', type=int, help='scan delay')
-=======
->>>>>>> upstream/master
 
     return parser.parse_args()
 

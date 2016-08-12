@@ -24,7 +24,7 @@ def logPokemonDb(p):
     hidden_time_utc = datetime.utcfromtimestamp(hidden_time_unix_s)
 
     encounter_id = str(p['encounter_id'])
-    spawnpoint_id = str(p['spawnpoint_id'])
+    spawnpoint_id = str(p['spawn_point_id'])
 
     longitude = float(p['longitude'])
     latitude = float(p['latitude'])

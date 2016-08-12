@@ -12,6 +12,7 @@ import threading
 
 from .utils import get_pokemon_name
 from .postgres import logPokemonDb
+
 db = SqliteDatabase('pogom.db', pragmas=(
     ('journal_mode', 'WAL'),
     ('cache_size', 10000),
@@ -39,7 +40,7 @@ class Pokemon(BaseModel):
     latitude = FloatField()
     longitude = FloatField()
     disappear_time = DateTimeField()
-    
+
     class Meta:
         primary_key = CompositeKey('encounter_id', 'disappear_time')
 
@@ -112,6 +113,7 @@ def parse_map(map_dict):
         for p in cell.get('wild_pokemons', []):
             if p['encounter_id'] in pokemons:
                 continue  # prevent unnecessary parsing
+
             logPokemonDb(p)
             pokemons[p['encounter_id']] = {
                 'encounter_id': b64encode(str(p['encounter_id'])),
@@ -176,7 +178,7 @@ def parse_map(map_dict):
                     'last_modified': datetime.utcfromtimestamp(
                             f['last_modified_timestamp_ms'] / 1000.0),
                 }
-                
+
     with db.atomic() and lock:
         if pokemons:
             log.info("Upserting {} pokemon".format(len(pokemons)))
