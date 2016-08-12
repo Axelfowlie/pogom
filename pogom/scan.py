@@ -33,6 +33,7 @@ class ScanMetrics:
     COMPLETE_SCAN_TIME = 0
     NUM_THREADS = 0
     NUM_ACCOUNTS = 0
+    CURRENT_SCAN_PERCENT = 0.0
 
 
 class Scanner(Thread):
@@ -67,7 +68,11 @@ class Scanner(Thread):
             ScanMetrics.CONSECUTIVE_MAP_FAILS += 1
         else:
             ScanMetrics.STEPS_COMPLETED += 1
-            log.info('Completed {:5.2f}% of scan.'.format(float(ScanMetrics.STEPS_COMPLETED) / ScanMetrics.NUM_STEPS * 100))
+            if ScanMetrics.NUM_STEPS:
+                ScanMetrics.CURRENT_SCAN_PERCENT = float(ScanMetrics.STEPS_COMPLETED) / ScanMetrics.NUM_STEPS * 100
+            else:
+                ScanMetrics.CURRENT_SCAN_PERCENT = 0
+            log.info('Completed {:5.2f}% of scan.'.format(ScanMetrics.CURRENT_SCAN_PERCENT))
 
     def scan(self):
         ScanMetrics.NUM_STEPS = len(self.scan_config.COVER)
@@ -97,7 +102,7 @@ class Scanner(Thread):
             else:
                 time.sleep(2)
 
-        self.api.wait_until_done()  # Work queue empty != work done
+        #self.api.wait_until_done()  # Work queue empty != work done
 
     def run(self):
         while True:
@@ -105,7 +110,7 @@ class Scanner(Thread):
                 self.scan_config.RESTART = False
                 if self.scan_config.ACCOUNTS_CHANGED:
                     self.scan_config.ACCOUNTS_CHANGED = False
-                    num_workers = max(int(math.ceil(len(config['ACCOUNTS']) / 23.0)), 3)
+                    num_workers = min(max(int(math.ceil(len(config['ACCOUNTS']) / 23.0)), 3), 10)
                     self.api.resize_workers(num_workers)
                     self.api.add_accounts(config['ACCOUNTS'])
 

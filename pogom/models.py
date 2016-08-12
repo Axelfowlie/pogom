@@ -76,6 +76,23 @@ class Pokemon(BaseModel):
             p['pokemon_name'] = get_pokemon_name(p['pokemon_id'])
         return pokemons
 
+    @classmethod
+    def get_heat_stats(cls):
+        query = (Pokemon
+                 .select(Pokemon.pokemon_id, fn.COUNT(Pokemon.pokemon_id).alias('count'), Pokemon.latitude, Pokemon.longitude)
+                 .group_by(Pokemon.latitude, Pokemon.longitude, Pokemon.pokemon_id)
+                 .order_by(-SQL('count'))
+                 .dicts())
+
+        pokemons = list(query)
+
+        known_pokemon = set(p['pokemon_id'] for p in query)
+        unknown_pokemon = set(range(1, 151)).difference(known_pokemon)
+        pokemons.extend({'pokemon_id': i, 'count': 0} for i in unknown_pokemon)
+        for p in pokemons:
+            p['pokemon_name'] = get_pokemon_name(p['pokemon_id'])
+
+        return pokemons
 
 class Pokestop(BaseModel):
     pokestop_id = CharField(primary_key=True)
@@ -109,6 +126,9 @@ def parse_map(map_dict):
     gyms = {}
 
     cells = map_dict['responses']['GET_MAP_OBJECTS']['map_cells']
+    if sum(len(cell.keys()) for cell in cells) == len(cells) * 2:
+        log.warning("Received valid response but without any data. Possibly rate-limited?")
+
     for cell in cells:
         for p in cell.get('wild_pokemons', []):
             if p['encounter_id'] in pokemons:
@@ -125,6 +145,9 @@ def parse_map(map_dict):
                         (p['last_modified_timestamp_ms'] +
                          p['time_till_hidden_ms']) / 1000.0)
             }
+            if p['time_till_hidden_ms'] < 0:
+                pokemons[p['encounter_id']]['disappear_time'] = datetime.utcfromtimestamp(
+                        p['last_modified_timestamp_ms']/1000 + 15*60)
 
         for p in cell.get('catchable_pokemons', []):
             if p['encounter_id'] in pokemons:

@@ -38,7 +38,7 @@ from . import __title__, __version__, __copyright__
 from .rpc_api import RpcApi
 from .auth_ptc import AuthPtc
 from .auth_google import AuthGoogle
-from .exceptions import AuthException, NotLoggedInException, ServerBusyOrOfflineException, NoPlayerPositionSetException, EmptySubrequestChainException, ServerApiEndpointRedirectException
+from .exceptions import AuthException, NotLoggedInException, ServerBusyOrOfflineException, NoPlayerPositionSetException, EmptySubrequestChainException, ServerApiEndpointRedirectException, AuthTokenExpiredException
 
 from . import protos
 from POGOProtos.Networking.Requests_pb2 import RequestType
@@ -249,8 +249,8 @@ class PGoApiWorker(Thread):
                 response = self.rpc_api.request(auth_provider.get_api_endpoint(), req_method_list, position)
                 if not response:
                     raise ValueError('Request returned problematic response: {}'.format(response))
-            except NotLoggedInException:
-                pass  # Trying again will call _login_if_necessary
+            except (NotLoggedInException, AuthTokenExpiredException):
+                pass  # Trying again will trigger login in _login_if_necessary
             except ServerApiEndpointRedirectException as e:
                 auth_provider.set_api_endpoint('https://{}/rpc'.format(e.get_redirected_endpoint()))
             except Exception as e:  # Never crash the worker
@@ -268,9 +268,9 @@ class PGoApiWorker(Thread):
                 if 'status_code' in response and response['status_code'] == 3:
                     self.log.info("Status code 3 returned. Performing get_player request.")
                     req_method_list = self.SC_3_REQUESTS + req_method_list
-                if 'responses' in response and not response['responses']:
+                elif 'responses' in response and not response['responses']:
                     self.log.info("Received empty map_object response. Logging out and retrying.")
-                    auth_provider._ticket_expire = time.time() # this will trigger a login in _login_if_necessary
+                    auth_provider._access_token_expiry = time.time() # This will trigger a login in _login_if_necessary
                 else:
                     again = False
 
@@ -291,11 +291,7 @@ class PGoApiWorker(Thread):
         self.log.info('Login successful: {}'.format(auth_provider.username))
 
     def _login_if_necessary(self, auth_provider, position):
-        if auth_provider._ticket_expire:
-            remaining_time = auth_provider._ticket_expire / 1000 - time.time()
-
-            if remaining_time < 60:
-                self.log.info("Login for {} has or is about to expire".format(auth_provider.username))
-                self._login(auth_provider, position)
-        else:
+        if not auth_provider.is_login() or auth_provider._access_token_expiry < time.time() + 120:
+            if auth_provider.is_login():
+                self.log.info("{} access token has or is about to expire".format(auth_provider.username))
             self._login(auth_provider, position)
